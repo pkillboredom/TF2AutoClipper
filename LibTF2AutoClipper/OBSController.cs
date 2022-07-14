@@ -15,7 +15,7 @@ namespace LibTF2AutoClipper
     {
         private readonly ILogger<OBSController> _logger;
         private readonly OBSWebsocket obs;
-        public OBSConnectionSettings connectionSettings { get; private set; }
+        public ConnectionSettings connectionSettings { get; private set; }
 
         public OBSController(ILogger<OBSController> logger)
         {
@@ -26,7 +26,7 @@ namespace LibTF2AutoClipper
             obs.Disconnected += onDisconnect;
         }
 
-        public void setObsConnectionSettings(OBSConnectionSettings connectionSettings)
+        public void setObsConnectionSettings(ConnectionSettings connectionSettings)
         {
             if (obs.IsConnected)
             {

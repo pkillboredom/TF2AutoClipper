@@ -15,7 +15,7 @@ namespace LibTF2AutoClipper
         private readonly ILogger<GameLauncher> _logger;
         public GameLauncherState GameLauncherState { get; private set; }
         public event GameLauncherStateCallback GameLauncherStateChanged;
-        private Process GameProcess; 
+        private Process? GameProcess; 
         private string? CurrentGameDirPath;
 
         public GameLauncher(ILogger<GameLauncher> logger)
@@ -34,16 +34,22 @@ namespace LibTF2AutoClipper
                 DoStateChange(GameLauncherState.Launching);
                 GameProcess = Process.Start(gameExePath, args);
                 GameProcess.Exited += OnGameProcessExited;
-                // Wait for RCON connection.
-                // Make RCON connection accessible at GameLauncher.RCON?
-                // On RCON Success set status Launched.
-                // On RCON fail set status error, kill Process.
+                DoStateChange(GameLauncherState.Launched);
             }
             catch
             {
+                ExitGame();
                 RestoreUserCfgAndCustom(gameDirPath);
                 CurrentGameDirPath = null;
                 DoStateChange(GameLauncherState.Error);
+            }
+        }
+        
+        public void ExitGame()
+        {
+            if (GameProcess != null)
+            {
+                GameProcess.Kill();
             }
         }
 
@@ -61,6 +67,7 @@ namespace LibTF2AutoClipper
             {
                 DoStateChange(GameLauncherState.Exited);
             }
+            GameProcess = null;
         }
 
         private void DoStateChange(GameLauncherState state)
