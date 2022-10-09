@@ -11,69 +11,100 @@ using System.Threading.Tasks;
 
 namespace LibTF2AutoClipper
 {
-    public class OBSController
+    public interface IObsController
     {
-        private readonly ILogger<OBSController> _logger;
-        private readonly OBSWebsocket obs;
-        public ConnectionSettings connectionSettings { get; private set; }
+        OBSWebsocket Obs { get; }
+        ConnectionSettings ConnectionSettings { get; }
+        void SetObsConnectionSettings(ConnectionSettings connectionSettings);
+        void ConnectObs(ConnectionSettings connectionSettings);
+        void ConnectObs();
+        void DisconnectObs();
+    }
 
-        public OBSController(ILogger<OBSController> logger)
+    public class ObsController : IObsController
+    {
+        private readonly ILogger<ObsController> _logger;
+        public OBSWebsocket Obs { get; private set; }
+        public ConnectionSettings ConnectionSettings { get; private set; }
+
+        public ObsController(ILogger<ObsController> logger)
         {
             _logger = logger;
-            obs = new OBSWebsocket();
-
-            obs.Connected += onConnect;
-            obs.Disconnected += onDisconnect;
+            Obs = new OBSWebsocket();
+            
+            Obs.Connected += OnConnect;
+            Obs.Disconnected += OnDisconnect;
         }
 
-        public void setObsConnectionSettings(ConnectionSettings connectionSettings)
+        public void SetObsConnectionSettings(ConnectionSettings connectionSettings)
         {
-            if (obs.IsConnected)
+            if (Obs.IsConnected)
             {
                 throw new InvalidOperationException("The OBS Connection settings cannot be altered while OBS is connected. Please disconnect from OBS first.");
             }
             else 
             {
-                this.connectionSettings = connectionSettings;
+                this.ConnectionSettings = connectionSettings;
             }
             
         }
 
-        private void onConnect(object sender, EventArgs e)
+        public void ConnectObs(ConnectionSettings connectionSettings)
         {
-            _logger.LogInformation($"Connected to OBS @ {connectionSettings.Host}.");
-
-            var streamStatus = obs.GetStreamingStatus();
-
-            if (streamStatus.IsRecording)
-                onRecordingStateChange(obs, OutputState.Started);
-            else
-                onRecordingStateChange(obs, OutputState.Stopped);
-        }
-        private void onDisconnect(object sender, EventArgs e)
-        {
-            _logger.LogInformation($"Disconnected from OBS.");
+            SetObsConnectionSettings(connectionSettings);
+            var host = ConnectionSettings.Host;
+            host = $"ws://{ConnectionSettings.Host}:{ConnectionSettings.Port}";
+            Obs.Connect(host, ConnectionSettings.Password);
         }
 
-        private void onRecordingStateChange(OBSWebsocket sender, OutputState newState)
+        public void ConnectObs()
         {
-            switch (newState)
-            {
-                case OutputState.Starting:
-                    break;
-
-                case OutputState.Started:
-                    break;
-
-                case OutputState.Stopping:
-                    break;
-
-                case OutputState.Stopped:
-                    break;
-
-                default:
-                    break;
-            }
+            var host = ConnectionSettings.Host;
+            host = $"ws://{ConnectionSettings.Host}:{ConnectionSettings.Port}";
+            Obs.Connect(host, ConnectionSettings.Password);
         }
+
+        public void DisconnectObs()
+        {
+            Obs.Disconnect();
+        }
+
+        private void OnConnect(object sender, EventArgs e)
+        {
+            _logger.LogInformation($"Connected to OBS @ {ConnectionSettings.Host}.");
+
+            //var streamStatus = obs.GetStreamingStatus();
+
+            //if (streamStatus.IsRecording)
+            //    onRecordingStateChange(obs, OutputState.Started);
+            //else
+            //    onRecordingStateChange(obs, OutputState.Stopped);
+        }
+
+        private void OnDisconnect(object sender, OBSWebsocketDotNet.Communication.ObsDisconnectionInfo e)
+        {
+            _logger.LogInformation($"Disconnected from OBS: {e.ObsCloseCode}, {e.DisconnectReason}.");
+        }
+
+        //private void OnRecordingStateChange(OBSWebsocket sender, OutputState newState)
+        //{
+        //    switch (newState)
+        //    {
+        //        case OutputState.Starting:
+        //            break;
+
+        //        case OutputState.Started:
+        //            break;
+
+        //        case OutputState.Stopping:
+        //            break;
+
+        //        case OutputState.Stopped:
+        //            break;
+
+        //        default:
+        //            break;
+        //    }
+        //}
     }
 }

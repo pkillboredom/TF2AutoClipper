@@ -1,8 +1,10 @@
 ﻿using LibTF2AutoClipper.Models;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace LibTF2AutoClipper
 {
+
     public class FileUtil
     {
         /// <summary>
@@ -12,7 +14,7 @@ namespace LibTF2AutoClipper
         /// <param name="DirectoryPath">The path to the directory to search.</param>
         /// <param name="Recursive">Search directory and all sub-directories.</param>
         /// <returns>A List with the paths of the files that were found.</returns>
-        public List<string> ListAllFilesWithExtensionInDirectoryPath(string Extension, string DirectoryPath, bool Recursive = false)
+        public static List<string> ListAllFilesWithExtensionInDirectoryPath(string Extension, string DirectoryPath, bool Recursive = false)
         {
             if (string.IsNullOrEmpty(Extension))
             {
@@ -27,7 +29,7 @@ namespace LibTF2AutoClipper
             return Directory.EnumerateFiles(DirectoryPath, $"*", Recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly).ToList();
         }
         
-        public DemoFileInfo CreateDemoFileInfoFromDemoPath(string path, string? tfEventFilePath = null, string clipperEventFilePath = null)
+        public static DemoFileInfo CreateDemoFileInfoFromDemoPath(string path, string? tfEventFilePath = null, string clipperEventFilePath = null)
         {
             if (!File.Exists(path))
             {
@@ -65,7 +67,7 @@ namespace LibTF2AutoClipper
             return demoFileInfo;
         }
 
-        public List<DemoFileInfo> CreateDemoFileInfoList(string DirectoryPath, bool Recursive = false)
+        public static List<DemoFileInfo> CreateDemoFileInfoList(string DirectoryPath, bool Recursive = false)
         {
             List<DemoFileInfo> demoFileInfoList = new List<DemoFileInfo>();
             foreach (string demoPath in ListAllFilesWithExtensionInDirectoryPath(".dem", DirectoryPath, Recursive))
@@ -73,6 +75,45 @@ namespace LibTF2AutoClipper
                 demoFileInfoList.Add(CreateDemoFileInfoFromDemoPath(demoPath));
             }
             return demoFileInfoList;
+        }
+
+        public static async Task MonitorLogWaitForTarget(string filename, string target, long startBytes)
+        {
+            using (FileStream fs = File.Open(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                try
+                {
+                    while (true)
+                    {
+                        // Seek 1024 bytes from the end of the file,
+                        // AFTER startBytes
+                        var adjustedOffset = Math.Max(fs.Length - 1024, startBytes) == startBytes ? 0 : fs.Length - startBytes;
+                        if (adjustedOffset > 1024) adjustedOffset = 1024;
+                        if (adjustedOffset > 0)
+                        {
+                            fs.Seek(-adjustedOffset, SeekOrigin.End);
+                            // read 1024 bytes
+                            byte[] bytes = new byte[adjustedOffset];
+                            fs.Read(bytes, 0, bytes.Length);
+                            // Convert bytes to string
+                            string s = Encoding.UTF8.GetString(bytes);
+                            if (!s.Contains(target))
+                            {
+                                await Task.Delay(1000);
+                            }
+                            else break;
+                        }
+                        else
+                        {
+                            await Task.Delay(1000);
+                        }
+                    }
+                }
+                finally
+                {
+                    fs.Close();
+                }
+            }
         }
     }
 }

@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
+    "TF2AutoClipper-Console TestSingleDemo": {
+      "commandName": "Project",
+      "commandLineArgs": "-i \"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Team Fortress 2\\tf\\demos\\tf2_demo_2022-10-06_20-52-16.dem\""
+    },
+    "TestTwoDemos": {
+      "commandName": "Project",
+      "commandLineArgs": "-i \"C:\\Program Files (x86)\\Steam\\steamapps\\common\\Team Fortress 2\\tf\\demos\\tf2_demo_2022-10-06_20-52-16.dem;C:\\Program Files (x86)\\Steam\\steamapps\\common\\Team Fortress 2\\tf\\demos\\tf2_demo_2022-10-03_20-12-47.dem\""
+    }
+  }
+}

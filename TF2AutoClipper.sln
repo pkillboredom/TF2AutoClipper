@@ -3,7 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32611.2
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibTF2AutoClipper", "LibTF2AutoClipper\LibTF2AutoClipper.csproj", "{204D421E-4566-485C-84D7-4DFFF4D4FFB4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LibTF2AutoClipper", "LibTF2AutoClipper\LibTF2AutoClipper.csproj", "{204D421E-4566-485C-84D7-4DFFF4D4FFB4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TF2AutoClipper-Console", "TF2AutoClipper-Console\TF2AutoClipper-Console.csproj", "{C36AEE83-F517-462D-9F66-A2DF580FEE8C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{204D421E-4566-485C-84D7-4DFFF4D4FFB4} = {204D421E-4566-485C-84D7-4DFFF4D4FFB4}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +20,10 @@ Global
 		{204D421E-4566-485C-84D7-4DFFF4D4FFB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{204D421E-4566-485C-84D7-4DFFF4D4FFB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{204D421E-4566-485C-84D7-4DFFF4D4FFB4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C36AEE83-F517-462D-9F66-A2DF580FEE8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C36AEE83-F517-462D-9F66-A2DF580FEE8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C36AEE83-F517-462D-9F66-A2DF580FEE8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C36AEE83-F517-462D-9F66-A2DF580FEE8C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

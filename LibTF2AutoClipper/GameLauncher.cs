@@ -9,7 +9,18 @@ using System.Threading.Tasks;
 namespace LibTF2AutoClipper
 {
     public delegate void GameLauncherStateCallback(GameLauncher sender, GameLauncherState state);
-    public class GameLauncher
+
+    public interface IGameLauncher
+    {
+        GameLauncherState GameLauncherState { get; }
+        event GameLauncherStateCallback GameLauncherStateChanged;
+        Task LaunchGame(string gameExePath, string gameDirPath, string args, CancellationToken cancellationToken);
+        void ExitGame();
+        void ReplaceUserCfgAndCustomWithClipperFiles(string gameDirectoryPath);
+        void RestoreUserCfgAndCustom(string gameDirectoryPath);
+    }
+
+    public class GameLauncher : IGameLauncher
     {
         private readonly string appBasePath = AppDomain.CurrentDomain.BaseDirectory;
         private readonly ILogger<GameLauncher> _logger;
@@ -30,7 +41,7 @@ namespace LibTF2AutoClipper
             try
             {
                 DoStateChange(GameLauncherState.Configuring);
-                ReplaceUserCfgAndCustomWithClipperFiles(gameDirPath);
+                //ReplaceUserCfgAndCustomWithClipperFiles(gameDirPath);
                 DoStateChange(GameLauncherState.Launching);
                 GameProcess = Process.Start(gameExePath, args);
                 GameProcess.Exited += OnGameProcessExited;
@@ -39,8 +50,8 @@ namespace LibTF2AutoClipper
             catch
             {
                 ExitGame();
-                RestoreUserCfgAndCustom(gameDirPath);
-                CurrentGameDirPath = null;
+                //RestoreUserCfgAndCustom(gameDirPath);
+                //CurrentGameDirPath = null;
                 DoStateChange(GameLauncherState.Error);
             }
         }

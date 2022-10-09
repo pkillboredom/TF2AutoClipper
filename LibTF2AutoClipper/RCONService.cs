@@ -10,7 +10,18 @@ using System.Threading.Tasks;
 
 namespace LibTF2AutoClipper
 {
-    public class RCONService
+    public interface IRCONService
+    {
+        ConnectionSettings? ConnectionSettings { get; }
+        RconStatus ConnectionStatus { get; }
+        event EventHandler? RCONConnected;
+        event EventHandler? RCONDisconnected;
+        Task<string?> SendRconCommand(string command);
+        Task ConnectRCON(ConnectionSettings connectionSettings);
+        Task DisconnectRCON();
+    }
+
+    public class RCONService : IRCONService
     {
         private static SemaphoreSlim _connectingSemaphore = new SemaphoreSlim(1,1);
         private const string checkString = "TF2AutoClipper has connected to RCON.";
@@ -30,6 +41,31 @@ namespace LibTF2AutoClipper
             RCONDisconnected += OnRconDisconnect;
         }
 
+        public async Task<string?> SendRconCommand(string command)
+        {
+            {
+                if (ConnectionStatus != RconStatus.Connected)
+                {
+                    _logger.LogWarning("RCON is not connected, cannot send command.");
+                    throw new Exception("RCON is not connected, cannot send command.");
+                }
+
+                try
+                {
+                    _logger.LogInformation($"RCON command sent: {command}");
+                    var response = await _rcon.SendCommandAsync(command);
+                    _logger.LogInformation($"RCON response: {response}");
+                    return response;
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "Error sending RCON command.");
+                    throw;
+                }
+            }
+        }
+
+        // Assume this is going to be called multiple times as retry from external.
         public async Task ConnectRCON(ConnectionSettings connectionSettings)
         {
             int timeout = 30000;
@@ -47,18 +83,20 @@ namespace LibTF2AutoClipper
                         ConnectionStatus = RconStatus.Connecting;
                         ConnectionSettings = connectionSettings;
                         _rcon = new RCON(IPAddress.Parse(connectionSettings.Host), (ushort)connectionSettings.Port, connectionSettings.Password);
-                        var rconConnect = _rcon.ConnectAsync();
-                        if (await Task.WhenAny(rconConnect, Task.Delay(timeout)) == rconConnect)
-                        {
-                            _rcon.OnDisconnected += RconCoreDisconnected;
+                        try{
+                            await _rcon.ConnectAsync();
+                            //_rcon.OnDisconnected += RconCoreDisconnected;
+                            ConnectionStatus = RconStatus.Connected;
                             RCONConnected?.Invoke(this, EventArgs.Empty);
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            _rcon.Dispose();
-                            _rcon = null;
-                            ConnectionSettings = null;
-                            throw new TimeoutException("Time out while establishing RCON connection.");
+                            _logger.LogError(ex.ToString());
+                            ConnectionStatus = RconStatus.Disconnected;
+                            //_rcon.Dispose();
+                            //_rcon = null;
+                            //ConnectionSettings = null;
+                            //throw;
                         }
                     }
                 }
@@ -116,21 +154,21 @@ namespace LibTF2AutoClipper
                 _logger.LogInformation($"RCON connected to {ConnectionSettings.Host} on port {ConnectionSettings.Port}.");
                 int timeout = 2000;
                 string checkString = "TF2AutoClipper has connected to RCON.";
-                var echoResponseTask = _rcon.SendCommandAsync($"echo {checkString}");
-                if (await Task.WhenAny(echoResponseTask, Task.Delay(timeout)) == echoResponseTask)
-                {
-                    if (echoResponseTask.Result == checkString)
+                var echoResponse = await _rcon.SendCommandAsync($"echo {checkString}");
+                //if (await Task.WhenAny(echoResponseTask, Task.Delay(timeout)) == echoResponseTask)
+                //{
+                    if (echoResponse == checkString)
                     {
                         ConnectionStatus = RconStatus.Connected;
                         return;
                     }
                     else
                     {
-                        _logger.LogError($"RCON echo response did not match expected response: {echoResponseTask.Result}");
+                        _logger.LogError($"RCON echo response did not match expected response: {echoResponse}");
                         _ = DisconnectRCON();
                         throw new InvalidOperationException("RCON echo response did not match expected response.");
                     }
-                }
+                //}
             }
         }
 
